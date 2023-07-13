@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+
+<html
+  lang="en"
+  xmlns:o="urn:schemas-microsoft-com:office:office"
+  xmlns:v="urn:schemas-microsoft-com:vml"
+>
+  <head>
+    <title></title>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0px;
+        padding: 0px;
+        border: none;
+      }
+      body {
+        background-color: rgb(222, 224, 239);
+		font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
+      }
+      .container {
+        background-color: rgb(222, 224, 239);
+		border-radius: 8px;
+      }
+      .databaseCoverImage {
+        display: block;
+        object-fit: cover;
+        border-radius: 0px;
+        width: 100%;
+        height: 20vh;
+        opacity: 1;
+        object-position: center 50%;
+      }
+      .databaseCoverHeading {
+		display: block;
+		margin-top: 10px;
+		color: rgb(55, 53, 47);
+		font-size: 27px;
+		font-weight: 700;
+		text-align: center;
+	}
+	
+	.pageCoverHeading {
+		display: block;
+		margin-top: 20px;
+		margin-bottom: 10px;
+    padding-left: 3px;
+		color: rgb(55, 53, 47);
+		font-size: 25px;
+		font-weight: 700;
+		text-align: left;
+	}
+	
+	.pageCoverImage{
+		display: block;
+		margin: 25px auto;
+        object-fit: cover;
+        border-radius: 1rem;
+        width: 80%;
+        height: 20vh;
+        opacity: 1;
+        object-position: center 50%;
+		align-self: center;
+	  }
+
+	  .pageProperties{
+		padding: 5px 10px;
+		text-align: justify;
+		font-size: 18px;
+	  }
+	  .pageProperties b{
+		margin-bottom: 10px;
+	  }
+
+    </style>
+  </head>
+  <body>
+    <div class="container">
