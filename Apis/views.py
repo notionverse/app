@@ -36,10 +36,10 @@ def sendEmail(emailRecipient, emailSubject, emailBody):
         smtp.sendmail(emailSender, emailRecipient, em.as_string())
 
 def generateRandomNumbers(min_value, max_value, count):
-    if count >= (max_value - min_value + 1):
+    if int(count) >= (max_value - min_value + 1):
         numbers = list(range(min_value, max_value + 1))
     else:
-        numbers = random.sample(range(min_value, max_value + 1), count)
+        numbers = random.sample(range(min_value, max_value + 1), int(count))
     
     return numbers
 
@@ -55,7 +55,7 @@ def getPagesHTML(pages):
     pagesHTML = '<div class="pages">'
     index = 1
     for page in pages:
-        pagesHTML += f'<div class="page"><div class="pageCover"><div class="pageCoverHeading">{index}. {page["title"]}</div><img class="pageCoverImage" alt="cover" src={page["cover"]}/></div>{getPagePropertiesHTML(page["properties"])}</div>'
+        pagesHTML += f'<div class="page"><div class="pageCover"><div class="pageCoverHeading">{index}. {page["title"]}</div><img class="pageCoverImage" alt="cover" src="{page["cover"]}"/></div>{getPagePropertiesHTML(page["properties"])}</div>'
         index += 1
 
     pagesHTML += '</div>'
@@ -68,14 +68,15 @@ def getDatabaseHTML(database):
     pagesHTML = getPagesHTML(databasePages)
 
     databaseHTML = '<div class="database">'
-    databaseHTML += f'<div class="databaseCover"><img class="databaseCoverImage" alt="cover" src={databaseInfo["cover"]}/><div class="databaseCoverHeading" id="temp">{databaseInfo["icon"]} {databaseInfo["name"]}</div></div>{pagesHTML}'
+    databaseHTML += f'<div class="databaseCover"><img class="databaseCoverImage" alt="cover" src="{databaseInfo["cover"]}"/><div class="databaseCoverHeading">{databaseInfo["icon"]} {databaseInfo["name"]}</div></div>{pagesHTML}'
     databaseHTML += '</div>'
     return databaseHTML
 
 #To be changed later
-def getAllTheDatabasesHTML(database):
+def getAllTheDatabasesHTML(databases):
     databasesHTML = '<div class="databases">'
-    databasesHTML += f'{getDatabaseHTML(database)}'
+    for database in databases:
+        databasesHTML += f'{getDatabaseHTML(database)}'
     databasesHTML += '</div>'
 
     return databasesHTML
@@ -96,26 +97,26 @@ def getEmailBody(databases):
 
     return wholeHtml
 
-class SendTodaysListingsView(APIView):
-    def get(self, request):
-        # email = request.data["email"]
-        # authToken = request.data["token"]
-
-        # if authToken != os.getenv('AUTH_TOKEN'):
-        #     return Response("Not Authorized")
-
-        headers = {
+def getDatabasesArray(databaseTokens, counts):
+    headers = {
             "accept" : "application/json",
             "Notion-Version" : "2022-06-28",
             "content-type" : "application/json",
             "authorization" : f"Bearer {os.getenv('NOTION_SECRET_KEY')}"
-        }
-        
-        urlForDatabase = f"https://api.notion.com/v1/databases/{os.getenv('DATABASE_ID')}"
-        urlForPages = f"https://api.notion.com/v1/databases/{os.getenv('DATABASE_ID')}/query"
-        payload = {"page_size": 100}
+    }
+    payload = {"page_size": 100}
+    
+    databases = []
 
-        response = requests.post(urlForPages, json=payload, headers=headers).json()
+    indexForCount = 0
+
+    for token in databaseTokens:
+        urlForDatabase = f"https://api.notion.com/v1/databases/{token}"
+        urlForPages = f"https://api.notion.com/v1/databases/{token}/query"
+
+        response = requests.post(urlForPages, json=payload, headers=headers)
+        response = response.json()
+
         pages = response["results"]
 
         databaseInfo = requests.get(urlForDatabase, headers=headers).json()
@@ -127,8 +128,8 @@ class SendTodaysListingsView(APIView):
         }
 
         todaysFlashcards = []
-        randomNumbers = generateRandomNumbers(0, len(response["results"])-1, 5)
-
+        randomNumbers = generateRandomNumbers(0, len(response["results"])-1, counts[indexForCount])
+        
         for randomIndex in randomNumbers:
             page = pages[randomIndex]
             currentFlashcardObj = {
@@ -141,7 +142,6 @@ class SendTodaysListingsView(APIView):
                 currentFlashcardObj["cover"] = page["cover"][page["cover"]["type"]]["url"]
             
             pageProperties = page["properties"]
-            
             for prop in pageProperties:
                 if(pageProperties[prop]["id"] == "title"):
                     if len(pageProperties[prop]["title"])>=1:
@@ -149,7 +149,15 @@ class SendTodaysListingsView(APIView):
                 else:
                     value = None
                     if len(pageProperties[prop][pageProperties[prop]["type"]])>=1:
-                        value = pageProperties[prop][pageProperties[prop]["type"]][0]["plain_text"]
+                        theType = pageProperties[prop]["type"]
+                        if theType == "files":
+                            value = pageProperties[prop][pageProperties[prop]["type"]][0]["file"]["url"]
+                        elif theType == "url":
+                            value = pageProperties[prop]["url"]
+                        elif theType == "rich_text":
+                            value = pageProperties[prop][pageProperties[prop]["type"]][0]["plain_text"]
+                        else:
+                            value = f'"{theType}" type is not supported yet!'
                     obj = {
                         "key": prop,
                         "value": value
@@ -157,9 +165,22 @@ class SendTodaysListingsView(APIView):
                     currentFlashcardObj["properties"].append(obj)
             
             todaysFlashcards.append(currentFlashcardObj)
+   
+        databases.append({"about": databasePropeties, "pages": todaysFlashcards})
+        indexForCount += 1
+    
+    return databases
 
-        databases = {"about": databasePropeties, "pages": todaysFlashcards}
+
+class SendTodaysListingsView(APIView):
+    def get(self, request):
+        params = request.query_params.get('databaseTokens')
+        databaseTokens = params.split(",")
+        counts = request.query_params.get('counts').split(",")
+
+        databases = getDatabasesArray(databaseTokens, counts)
         emailBody = getEmailBody(databases)
+
         sendEmail(os.getenv('MY_EMAIL'), "NotionVerse", emailBody)
 
-        return Response("Email Successfully sent!")
+        return Response("Success!")
