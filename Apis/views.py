@@ -97,12 +97,12 @@ def getEmailBody(databases):
     return wholeHtml
 
 class SendTodaysListingsView(APIView):
-    def post(self, request):
-        email = request.data["email"]
-        authToken = request.data["token"]
+    def get(self, request):
+        # email = request.data["email"]
+        # authToken = request.data["token"]
 
-        if authToken != os.getenv('AUTH_TOKEN'):
-            return Response("Not Authorized")
+        # if authToken != os.getenv('AUTH_TOKEN'):
+        #     return Response("Not Authorized")
 
         headers = {
             "accept" : "application/json",
@@ -160,6 +160,6 @@ class SendTodaysListingsView(APIView):
 
         databases = {"about": databasePropeties, "pages": todaysFlashcards}
         emailBody = getEmailBody(databases)
-        sendEmail(email, "NotionVerse", emailBody)
+        sendEmail(os.getenv('MY_EMAIL'), "NotionVerse", emailBody)
 
         return Response("Email Successfully sent!")
