@@ -5,7 +5,7 @@ Django==3.2.20
 django-cors-headers==4.1.0
 djangorestframework==3.14.0
 idna==3.4
-python-dotenv==1.0.0
+python-dotenv==0.21.1
 pytz==2023.3
 requests==2.31.0
 sqlparse==0.4.4
