@@ -22,7 +22,8 @@
       }
       .container {
         background-color: rgb(222, 224, 239);
-		border-radius: 8px;
+        padding-bottom: 15px;
+		    border-radius: 8px;
       }
       .databaseCoverImage {
         display: block;
@@ -73,6 +74,15 @@
 	  .pageProperties b{
 		margin-bottom: 10px;
 	  }
+    .goToPage{
+      display: block;
+      margin: 0px auto;
+      margin-bottom: 35px;
+		  text-align: center;
+      text-decoration: underline;
+		  font-size: 19px;
+      color: black!important;
+    }
 
     </style>
   </head>

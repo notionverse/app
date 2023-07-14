@@ -43,6 +43,24 @@ def generateRandomNumbers(min_value, max_value, count):
     
     return numbers
 
+def generateRandomDistribution(databaseCount, count):
+    count = int(count)
+    helperArray = list(range(databaseCount))
+    random.shuffle(helperArray)
+
+    counts = []
+    remaining_count = count
+
+    for i in range(databaseCount):
+        if i == databaseCount - 1:
+            assigned_count = remaining_count
+        else:
+            assigned_count = random.randint(0, remaining_count)
+        
+        counts.append(assigned_count)
+        remaining_count -= assigned_count
+
+    return counts
 
 def getPagePropertiesHTML(properties):
     propertiesHTML = ""
@@ -55,7 +73,8 @@ def getPagesHTML(pages):
     pagesHTML = '<div class="pages">'
     index = 1
     for page in pages:
-        pagesHTML += f'<div class="page"><div class="pageCover"><div class="pageCoverHeading">{index}. {page["title"]}</div><img class="pageCoverImage" alt="cover" src="{page["cover"]}"/></div>{getPagePropertiesHTML(page["properties"])}</div>'
+        pagesHTML += f'<div class="page"><div class="pageCover"><div class="pageCoverHeading">{index}. {page["title"]}</div><img class="pageCoverImage" alt="cover" style="display: {page["cover"]}" src="{page["cover"]}"/></div>{getPagePropertiesHTML(page["properties"])}</div>'
+        pagesHTML += f'<a class="goToPage" href="{page["url"]}">Go to the page for more!</a>'
         index += 1
 
     pagesHTML += '</div>'
@@ -68,11 +87,10 @@ def getDatabaseHTML(database):
     pagesHTML = getPagesHTML(databasePages)
 
     databaseHTML = '<div class="database">'
-    databaseHTML += f'<div class="databaseCover"><img class="databaseCoverImage" alt="cover" src="{databaseInfo["cover"]}"/><div class="databaseCoverHeading">{databaseInfo["icon"]} {databaseInfo["name"]}</div></div>{pagesHTML}'
+    databaseHTML += f'<div class="databaseCover"><img class="databaseCoverImage" alt="cover" src="{databaseInfo["cover"]}"/><div class="databaseCoverHeading">{databaseInfo["icon"]} <a style="color: black" href="{databaseInfo["url"]}">{databaseInfo["name"]}</a></div></div>{pagesHTML}'
     databaseHTML += '</div>'
     return databaseHTML
 
-#To be changed later
 def getAllTheDatabasesHTML(databases):
     databasesHTML = '<div class="databases">'
     for database in databases:
@@ -120,13 +138,14 @@ def getDatabasesArray(databaseTokens, counts):
         pages = response["results"]
 
         databaseInfo = requests.get(urlForDatabase, headers=headers).json()
-
+       
         databasePropeties = {
             "cover": databaseInfo["cover"][databaseInfo["cover"]["type"]]["url"],
             "icon": databaseInfo["icon"][databaseInfo["icon"]["type"]],
-            "name": databaseInfo["title"][0]["plain_text"]
+            "name": databaseInfo["title"][0]["plain_text"],
+            "url": databaseInfo["url"]
         }
-
+        
         todaysFlashcards = []
         randomNumbers = generateRandomNumbers(0, len(response["results"])-1, counts[indexForCount])
         
@@ -135,11 +154,15 @@ def getDatabasesArray(databaseTokens, counts):
             currentFlashcardObj = {
                 "cover": None,
                 "title": None,
+                "url": None,
                 "properties": [],
             }
 
             if page["cover"]:
                 currentFlashcardObj["cover"] = page["cover"][page["cover"]["type"]]["url"]
+            
+            if page["url"]:
+                currentFlashcardObj["url"] = page["url"]
             
             pageProperties = page["properties"]
             for prop in pageProperties:
@@ -151,7 +174,7 @@ def getDatabasesArray(databaseTokens, counts):
                     if len(pageProperties[prop][pageProperties[prop]["type"]])>=1:
                         theType = pageProperties[prop]["type"]
                         if theType == "files":
-                            value = pageProperties[prop][pageProperties[prop]["type"]][0]["file"]["url"]
+                            value = f'<a class="goToPage" href="{pageProperties[prop][pageProperties[prop]["type"]][0]["file"]["url"]}">Link to the file</a>'
                         elif theType == "url":
                             value = pageProperties[prop]["url"]
                         elif theType == "rich_text":
@@ -174,13 +197,33 @@ def getDatabasesArray(databaseTokens, counts):
 
 class SendTodaysListingsView(APIView):
     def get(self, request):
-        params = request.query_params.get('databaseTokens')
-        databaseTokens = params.split(",")
-        counts = request.query_params.get('counts').split(",")
+        authToken = None
+        databaseTokens = None
+        selectRandom = None
+        counts = 0
+        toEmail = None
+
+        try:
+            authToken = request.META["HTTP_AUTHTOKEN"]
+            databaseTokens = request.META["HTTP_DATABASETOKENS"].split(",")
+            selectRandom = request.META["HTTP_SELECTRANDOM"]
+            counts = request.META["HTTP_COUNTS"]
+            toEmail = request.META["HTTP_TOEMAIL"]
+
+            if selectRandom == "0":
+                counts = counts.split(",")
+        except:
+            return Response("Invalid Headers!")
+
+        if authToken != os.getenv("AUTH_TOKEN"):
+            return Response("Not Authorized!")
+        
+        if selectRandom == "1":
+            counts = generateRandomDistribution(len(databaseTokens), counts)
 
         databases = getDatabasesArray(databaseTokens, counts)
         emailBody = getEmailBody(databases)
 
-        sendEmail(os.getenv('MY_EMAIL'), "NotionVerse", emailBody)
+        sendEmail(toEmail, "Notions of the day!", emailBody)
 
-        return Response("Success!")
+        return Response("Email Sent!")
