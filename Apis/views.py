@@ -176,7 +176,7 @@ def getDatabasesArray(databaseTokens, counts):
                         if theType == "files":
                             value = f'<a class="goToPage" href="{pageProperties[prop][pageProperties[prop]["type"]][0]["file"]["url"]}">Link to the file</a>'
                         elif theType == "url":
-                            value = pageProperties[prop]["url"]
+                            value = f'<a class="goToPage" href="{pageProperties[prop]["url"]}">Link</a>'
                         elif theType == "rich_text":
                             value = pageProperties[prop][pageProperties[prop]["type"]][0]["plain_text"]
                         else:
