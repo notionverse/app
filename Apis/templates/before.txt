@@ -68,7 +68,7 @@
 
 	  .pageProperties{
 		padding: 5px 10px;
-		text-align: justify;
+		text-align: left;
 		font-size: 18px;
 	  }
 	  .pageProperties b{

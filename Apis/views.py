@@ -87,7 +87,7 @@ def getDatabaseHTML(database):
     pagesHTML = getPagesHTML(databasePages)
 
     databaseHTML = '<div class="database">'
-    databaseHTML += f'<div class="databaseCover"><img class="databaseCoverImage" alt="cover" src="{databaseInfo["cover"]}"/><div class="databaseCoverHeading">{databaseInfo["icon"]} <a style="color: black" href="{databaseInfo["url"]}">{databaseInfo["name"]}</a></div></div>{pagesHTML}'
+    databaseHTML += f'<div class="databaseCover"><img class="databaseCoverImage" style="display: {databaseInfo["cover"]}" alt="cover" src="{databaseInfo["cover"]}"/><div class="databaseCoverHeading">{databaseInfo["icon"]} <a style="color: black" href="{databaseInfo["url"]}">{databaseInfo["name"]}</a></div></div>{pagesHTML}'
     databaseHTML += '</div>'
     return databaseHTML
 
@@ -134,14 +134,25 @@ def getDatabasesArray(databaseTokens, counts):
 
         response = requests.post(urlForPages, json=payload, headers=headers)
         response = response.json()
-
+        
         pages = response["results"]
 
         databaseInfo = requests.get(urlForDatabase, headers=headers).json()
-       
+        
+        dbCover = None
+        dbIcon = None
+        if not databaseInfo["cover"]:
+            dbCover = "none"
+        else:
+            dbCover = databaseInfo["cover"][databaseInfo["cover"]["type"]]["url"]
+        
+        if not databaseInfo["icon"]:
+            dbIcon = ""
+        else:
+            dbIcon = databaseInfo["icon"][databaseInfo["icon"]["type"]]
         databasePropeties = {
-            "cover": databaseInfo["cover"][databaseInfo["cover"]["type"]]["url"],
-            "icon": databaseInfo["icon"][databaseInfo["icon"]["type"]],
+            "cover": dbCover,
+            "icon": dbIcon,
             "name": databaseInfo["title"][0]["plain_text"],
             "url": databaseInfo["url"]
         }
