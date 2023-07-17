@@ -62,10 +62,51 @@ def generateRandomDistribution(databaseCount, count):
 
     return counts
 
+def convertRichText(richText):
+    html = ""
+    
+    for element in richText:
+        content = element['text']['content']
+        annotations = element['annotations']
+        href = element['href']
+        
+        if annotations.get('bold'):
+            content = f"<strong>{content}</strong>"
+        
+        if annotations.get('italic'):
+            content = f"<em>{content}</em>"
+        
+        if annotations.get('strikethrough'):
+            content = f"<del>{content}</del>"
+        
+        if annotations.get('underline'):
+            content = f"<u>{content}</u>"
+        
+        if annotations.get('code'):
+            content = f"<code>{content}</code>"
+        
+        if href:
+            content = f"<a href='{href}'>{content}</a>"
+        
+        if '\n' in content:
+            content = content.replace('\n', '<br>')
+        
+        html += content
+    
+    return html
+
+
 def getPagePropertiesHTML(properties):
     propertiesHTML = ""
+    richTextHtml = ""
     for pro in properties:
-        propertiesHTML += f'<div class="pageProperties"><b>{pro["key"]}: </b><p class="pageProperties">{pro["value"]}</p></div>'
+        if not isinstance(pro["value"], list):
+            richTextHtml = pro["value"]
+        else:
+            richTextHtml = convertRichText(pro["value"])
+        
+        propertiesHTML += f'<div class="pageProperties"><b>{pro["key"]}: </b><p class="pageProperties">{richTextHtml}</p></div>'
+
     
     return propertiesHTML
 
@@ -189,7 +230,7 @@ def getDatabasesArray(databaseTokens, counts):
                         elif theType == "url":
                             value = f'<a class="goToPage" href="{pageProperties[prop]["url"]}">Link</a>'
                         elif theType == "rich_text":
-                            value = pageProperties[prop][pageProperties[prop]["type"]][0]["plain_text"]
+                            value = pageProperties[prop][pageProperties[prop]["type"]]
                         else:
                             value = f'"{theType}" type is not supported yet!'
                     obj = {
@@ -237,4 +278,4 @@ class SendTodaysListingsView(APIView):
 
         sendEmail(toEmail, "Notions of the day!", emailBody)
 
-        return Response("Email Sent!")
+        return Response(databases)

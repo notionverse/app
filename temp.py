@@ -1,2 +1,3 @@
-st = "3r32"
-print(len(st))
+arr = "[1,234,3]"
+
+print(isinstance(arr, list))
